@@ -1,6 +1,7 @@
 import mapboxgl from 'mapbox-gl';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 
 export interface ModelTransform {
   translateX: number;
@@ -43,14 +44,6 @@ const createCustomLayer = (map: mapboxgl.Map, modelTransform: ModelTransform): m
   const camera = new THREE.Camera();
   const scene = new THREE.Scene();
 
-  const directionalLight1 = new THREE.DirectionalLight(0xffffff);
-  directionalLight1.position.set(0, -70, 100).normalize();
-  scene.add(directionalLight1);
-
-  const directionalLight2 = new THREE.DirectionalLight(0xffffff);
-  directionalLight2.position.set(0, 70, 100).normalize();
-  scene.add(directionalLight2);
-
   const loader = new GLTFLoader();
   loader.load(
     '/model/runway1331-v2.glb',
@@ -65,6 +58,9 @@ const createCustomLayer = (map: mapboxgl.Map, modelTransform: ModelTransform): m
     antialias: true
   });
 
+  loadEnvironment(renderer, scene);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.autoClear = false;
 
   return {
@@ -112,4 +108,18 @@ const createCustomLayer = (map: mapboxgl.Map, modelTransform: ModelTransform): m
       map.triggerRepaint();
     }
   };
+}
+
+const loadEnvironment = (renderer: THREE.WebGLRenderer, scene: THREE.Scene) => {
+  const loader = new EXRLoader();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
+  loader.load(`/hdr/citrus_orchard_road_puresky_1k.exr`, (texture: THREE.DataTexture) => {
+    texture.mapping = THREE.EquirectangularReflectionMapping; // 告诉 three.js 这是经纬度全景图
+    texture.colorSpace = THREE.LinearSRGBColorSpace;          // HDR 线性（不要用 SRGBColorSpace）
+    const envMap = pmrem.fromEquirectangular(texture).texture;
+    scene.environment = envMap;
+    texture.dispose();
+    pmrem.dispose();
+  });
 }
