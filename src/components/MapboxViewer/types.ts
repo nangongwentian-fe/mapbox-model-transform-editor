@@ -5,4 +5,5 @@ export interface MapboxViewerProps {
   style?: React.CSSProperties;
   mapOptions?: Omit<mapboxgl.MapOptions, 'container'>;
   onMapLoad?: (map: MapboxHelper) => void;
+  onMapRemove?: () => void;
 }

@@ -11,12 +11,14 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@types/three": "^0.182.0",
     "ahooks": "^3.9.6",
     "antd": "^6.1.2",
     "mapbox-gl": "^3.17.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwindcss": "^4.1.18",
+    "three": "^0.182.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

@@ -5,7 +5,7 @@ import { useMount } from 'ahooks';
 import './index.scss'
 
 
-const MapboxViewer = memo<MapboxViewerProps>(({ className, style, mapOptions, onMapLoad }) => {
+const MapboxViewer = memo<MapboxViewerProps>(({ className, style, mapOptions, onMapLoad, onMapRemove }) => {
   const container = useRef<HTMLDivElement>(null);
   useMount(() => {
     // 如果没有container，提示报错
@@ -22,6 +22,11 @@ const MapboxViewer = memo<MapboxViewerProps>(({ className, style, mapOptions, on
     mapboxHelper.map.on('load', () => {
       onMapLoad?.(mapboxHelper);
     });
+    // 组件被销毁时，销毁mapbox实例
+    return () => {
+      mapboxHelper.map.remove();
+      onMapRemove?.();
+    }
   })
   return (
     <div ref={container} className={className} style={style}></div>
