@@ -13,11 +13,16 @@ export interface ModelTransform {
   scale: number;
 }
 
+// 定义自定义图层扩展接口，包含更新模型位置的方法
+export interface CustomLayerWithUpdate extends mapboxgl.CustomLayerInterface {
+  updateModelOrigin?: (lng: number, lat: number) => void;
+}
+
 export const addModel = (map: mapboxgl.Map) => {
   // 模型原始位置
-  const modelOrigin: [number, number] = [114.2129, 22.3038];
+  const modelOrigin: [number, number] = [114.214078, 22.306616];
   // 模型高度
-  const modelAltitude = 0;
+  const modelAltitude = 10;
   // 模型旋转角度
   const modelRotate = [Math.PI / 2, 0, 0];
 
@@ -40,7 +45,7 @@ export const addModel = (map: mapboxgl.Map) => {
   return createCustomLayer(map, modelTransform);
 }
 
-const createCustomLayer = (map: mapboxgl.Map, modelTransform: ModelTransform): mapboxgl.CustomLayerInterface => {
+const createCustomLayer = (map: mapboxgl.Map, modelTransform: ModelTransform): CustomLayerWithUpdate => {
   const camera = new THREE.Camera();
   const scene = new THREE.Scene();
 
@@ -63,7 +68,7 @@ const createCustomLayer = (map: mapboxgl.Map, modelTransform: ModelTransform): m
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.autoClear = false;
 
-  return {
+  const layer: CustomLayerWithUpdate = {
     id: '3d-model',
     type: 'custom',
     renderingMode: '3d',
@@ -106,9 +111,48 @@ const createCustomLayer = (map: mapboxgl.Map, modelTransform: ModelTransform): m
       renderer.resetState();
       renderer.render(scene, camera);
       map.triggerRepaint();
+    },
+    // 添加更新模型位置的方法
+    updateModelOrigin: (lng: number, lat: number) => {
+      const modelAltitude = 10;
+      // 重新计算墨卡托投影坐标
+      const newModelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
+        [lng, lat],
+        modelAltitude
+      );
+      // 更新模型变换参数
+      modelTransform.translateX = newModelAsMercatorCoordinate.x;
+      modelTransform.translateY = newModelAsMercatorCoordinate.y;
+      modelTransform.translateZ = newModelAsMercatorCoordinate.z;
+      modelTransform.scale = newModelAsMercatorCoordinate.meterInMercatorCoordinateUnits();
+      // 触发地图重绘
+      map.triggerRepaint();
     }
   };
+
+  return layer;
 }
+
+/**
+ * 更新模型位置的工具函数
+ * @param map Mapbox地图实例
+ * @param layerId 自定义图层ID
+ * @param lng 新的经度
+ * @param lat 新的纬度
+ */
+export const updateModelOrigin = (
+  map: mapboxgl.Map,
+  layerId: string,
+  lng: number,
+  lat: number
+): void => {
+  // 获取自定义图层
+  const layer = map.getLayer(layerId) as unknown as CustomLayerWithUpdate;
+  if (layer && layer.updateModelOrigin) {
+    // 调用图层的updateModelOrigin方法更新模型位置
+    layer.updateModelOrigin(lng, lat);
+  }
+};
 
 const loadEnvironment = (renderer: THREE.WebGLRenderer, scene: THREE.Scene) => {
   const loader = new EXRLoader();

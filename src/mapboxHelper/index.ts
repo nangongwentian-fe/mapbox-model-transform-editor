@@ -6,7 +6,7 @@ export class MapboxHelper {
     // 合并mapOptions和默认选项
     const mergedOptions = Object.assign({
       container: 'map', // container ID
-      style: 'mapbox://styles/mapbox/streets-v12', // style URL
+      style: 'mapbox://styles/mapbox/standard-satellite', // style URL
       center: [114.2133557082447, 22.306057199999998], // starting position [lng, lat]
       zoom: 13, // starting zoom
       // 关闭地图的版权信息
